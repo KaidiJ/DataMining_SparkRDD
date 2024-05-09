@@ -6,38 +6,28 @@ from pyspark import SparkContext, SparkConf
 
 
 def create_hash_coeffs(num_hash_funcs, num_bins):
-    """
-    Creates a list of tuples with random 'a' and 'b' coefficients for hash functions.
-    """
+    """ Creates a list of tuples with random 'a' and 'b' coefficients for hash functions. """
     return [(random.randint(1, num_bins - 1), random.randint(0, num_bins - 1)) for _ in range(num_hash_funcs)]
 
-
 def hash_functions(user_set, hash_coeffs, num_bins):
-    """
-    Apply a collection of hash functions to each user in the set.
-    """
+    """ Apply a collection of hash functions to each user in the set. """
     sigs = []
     for a, b in hash_coeffs:
         min_hash = min([(a * user + b) % num_bins for user in user_set])
         sigs.append(min_hash)
     return sigs
 
-
 def jaccard_similarity(set1, set2):
-    """
-    Calculate Jaccard similarity between two sets.
-    """
+    """ Calculate Jaccard similarity between two sets. """
     intersection = len(set1.intersection(set2))
     union = len(set1.union(set2))
     return intersection / union
-
 
 def main(input_file, output_file):
     conf = SparkConf().setAppName("LSH Yelp Data")
     sc = SparkContext(conf=conf)
 
     data = sc.textFile(input_file).map(lambda line: line.split(","))
-
     business_user_matrix = data.map(lambda x: (x[1], x[0], 1))  # Convert stars to binary
 
     # Generate and broadcast the mappings to all workers
@@ -97,11 +87,8 @@ def main(input_file, output_file):
         writer = csv.writer(out_file)
         writer.writerow(['business_id_1', 'business_id_2', 'similarity'])
         for pair, sim in similar_pairs_sorted.collect():
-            # 确保business_id对已经是按词典序排列的
             writer.writerow([pair[0], pair[1], sim])
-
     sc.stop()
-
 
 if __name__ == "__main__":
     input_file = sys.argv[1]

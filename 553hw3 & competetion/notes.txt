@@ -1,6 +1,0 @@
- commands to deactivate nad make new virtual env and activate
-
- deactivate
-  932  python3 -m venv .abc123
-  934  . .abc123/bin/activate
-  936  pip install -r requirements.txt

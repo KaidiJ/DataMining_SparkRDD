@@ -3,7 +3,6 @@ from pyspark import SparkContext
 import sys
 import queue
 
-
 def compute_shortest_paths(root, adj_list):
     q = queue.Queue()
     q.put(root)
@@ -24,11 +23,10 @@ def compute_shortest_paths(root, adj_list):
 
     return parents, num_paths, visited
 
-
 def compute_edge_betweenness(adj_list):
     betweenness = defaultdict(float)
     for root in adj_list:
-        if root in adj_list:  # 确认节点存在于邻接表中
+        if root in adj_list:
             parents, num_paths, visited = compute_shortest_paths(root, adj_list)
             node_credit = defaultdict(float, {n: 1.0 for n in adj_list})
             sorted_nodes = sorted(visited, key=visited.get, reverse=True)
@@ -39,11 +37,9 @@ def compute_edge_betweenness(adj_list):
                     ordered_edge = tuple(sorted((parent, node)))
                     betweenness[ordered_edge] += edge_credit
                     node_credit[parent] += edge_credit
-
     for edge in betweenness:
         betweenness[edge] /= 2
     return betweenness
-
 
 def calculate_betweenness(edges_rdd):
     adj_list = edges_rdd.flatMap(lambda edge: [edge, (edge[1], edge[0])]) \
@@ -51,7 +47,6 @@ def calculate_betweenness(edges_rdd):
     betweenness = compute_edge_betweenness(adj_list)
     betweenness_rdd = sc.parallelize([(edge, val) for edge, val in betweenness.items()])
     return betweenness_rdd.sortBy(lambda x: (-x[1], x[0]))
-
 
 # Initialize Spark Context
 sc = SparkContext.getOrCreate()
@@ -70,7 +65,6 @@ rdd = rdd.filter(lambda line: line != header).map(lambda line: line.split(','))
 
 # Create user-business pairs
 user_business_pairs = rdd.map(lambda x: (x[0], x[1]))
-
 # Filter based on threshold
 user_pairs = user_business_pairs.groupByKey().mapValues(set).cache()
 
@@ -81,7 +75,6 @@ edges = user_pairs.cartesian(user_pairs) \
 
 # Calculate betweenness
 betweenness = calculate_betweenness(edges)
-
 # Sort by betweenness value in descending order, then by the first user_id lexicographically
 sorted_betweenness = betweenness.sortBy(lambda x: (-x[1], x[0]))
 
@@ -91,13 +84,12 @@ with open(output_file_path, 'w') as file:
         line = f"{edge}, {round(betweenness_value, 5)}\n"
         file.write(line)
 
-
 # part2
 def get_communities(adj_list):
     communities = []
     visited = set()
 
-    for node in adj_list.keys():  # 确保遍历的是邻接表的键
+    for node in adj_list.keys():
         if node not in visited:
             visited.add(node)
             community = {node}
@@ -113,36 +105,26 @@ def get_communities(adj_list):
 
     return communities
 
-
 def modularity(communities, m, ki, original_edges):
-    # print(m)
-    # 将边集转换为无序的边对集合，以便快速检查边的存在
     edges_set = {frozenset((i, j)) for i, j in original_edges}
     Q = 0.0
 
     for community in communities:
         for i in community:
             for j in community:
-                # 检查边是否存在
+                # check if edge exists
                 A_ij = 1 if frozenset((i, j)) in edges_set else 0
-                # 计算模块度的一部分
+                # calculate modularity
                 Q += (A_ij - ki[i] * ki[j] / (2.0 * m))
-
     Q /= (2.0 * m)
     return Q
 
-
 def update_edges(adjacency_list):
-    """
-    Rebuild edges from the updated adjacency list.
-    """
+    """ Rebuild edges from the updated adjacency list. """
     return [(node, neighbor) for node, neighbors in adjacency_list.items() for neighbor in neighbors]
 
-
 def remove_high_betweenness_edges(current_betweenness, adjacency_list):
-    """
-    Remove edges with the highest betweenness.
-    """
+    """ Remove edges with the highest betweenness. """
     max_betweenness_value = max(current_betweenness.values())
     edges_to_remove = [edge for edge, bt in current_betweenness.items() if bt == max_betweenness_value]
     for edge in edges_to_remove:
@@ -150,8 +132,7 @@ def remove_high_betweenness_edges(current_betweenness, adjacency_list):
         adjacency_list[edge[1]].discard(edge[0])
     return adjacency_list
 
-
-# 计算m、ki
+# m、ki
 original_edges = edges.collect()
 m = len(original_edges)
 ki = defaultdict(int)

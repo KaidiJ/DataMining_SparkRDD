@@ -1,21 +1,11 @@
 from pyspark.sql import SparkSession, functions as F
 from graphframes import GraphFrame
-
-
 def main(filter_threshold, input_file_path, community_output_file_path):
-    # Initialize Spark Session
+
     spark = SparkSession.builder.appName("Community Detection").getOrCreate()
-
-    # Read dataset
     df = spark.read.csv(input_file_path, header=True, inferSchema=True)
-
-    # Set log level to WARN to reduce the amount of logging
     spark.sparkContext.setLogLevel("WARN")
-
-    # Create pairs of users and businesses
     user_business_pairs = df.rdd.map(lambda row: (row['user_id'], row['business_id']))
-
-    # Filter based on threshold
     user_pairs = user_business_pairs.groupByKey().mapValues(set).collectAsMap()
 
     # Build edges between users sharing businesses above the threshold
@@ -43,7 +33,6 @@ def main(filter_threshold, input_file_path, community_output_file_path):
                    .withColumn('size', F.size('members'))
                    .orderBy('size', 'members'))
 
-    # Save the communities to the file
     with open(community_output_file_path, 'w') as f:
         for row in communities.collect():
             members = ["'" + member + "'" for member in row['members']]

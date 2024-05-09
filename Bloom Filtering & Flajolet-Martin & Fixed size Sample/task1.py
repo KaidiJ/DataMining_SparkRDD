@@ -9,17 +9,14 @@ a = random.sample(range(1, 69997), 10)  # Hash function parameters
 b = random.sample(range(1, 69997), 10)  # Hash function parameters
 p = int(1e9 + 7)  # Large prime
 
-
 def string_to_int(user):
     """Convert user_id string to integer."""
     return int(binascii.hexlify(user.encode('utf8')), 16)
-
 
 def myhashs(user):
     """Generate hash values for user."""
     x = string_to_int(user)
     return [((a[i] * x + b[i]) % p) % 69997 for i in range(len(a))]  # Use len(a) as the range
-
 
 def check_and_update_bloom_filter(user_id):
     """Check and update the Bloom filter."""
@@ -31,13 +28,11 @@ def check_and_update_bloom_filter(user_id):
             filter_bit_array[hash_val] = 1
     return user_seen
 
-
 def calculate_fpr(new_users, previous_users):
     """Calculate the False Positive Rate (FPR)."""
     checked_users = new_users - previous_users  # Only consider users not already in the previous_users_set
     false_positives = sum(1 for user in checked_users if check_and_update_bloom_filter(user))
     return false_positives / len(checked_users) if checked_users else 0
-
 
 def bloom_filter_simulation(num_of_asks, stream_size, output_file):
     """Simulate the Bloom filter."""
@@ -69,7 +64,6 @@ def bloom_filter_simulation(num_of_asks, stream_size, output_file):
         csvwriter.writerow(['Time', 'FPR'])
         for time, fpr in results:
             csvwriter.writerow([time, fpr])
-
 
 # Entry point for the script
 if __name__ == '__main__':
