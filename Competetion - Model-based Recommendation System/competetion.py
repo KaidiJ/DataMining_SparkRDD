@@ -84,7 +84,6 @@ if __name__ == '__main__':
     val_user_business = val_rdd.map(lambda x: (x[1], x[0])).collect()
     val_features = np.array(val_rdd.map(lambda x: x[2:]).collect(), dtype=np.float32)
 
-    # 定义新的参数
     param = {
         'lambda': 9.92724463758443,
         'alpha': 0.2765119705933928,
@@ -97,19 +96,14 @@ if __name__ == '__main__':
         'n_estimators': 300,
     }
 
-    # 使用参数初始化XGBRegressor
     xgb_model = xgb.XGBRegressor(**param)
-
-    # 使用训练数据集进行模型训练
     xgb_model.fit(train_features, train_labels)
-
-    # 使用验证集进行预测
     predictions = xgb_model.predict(val_features)
 
-    # Write predictions to file
     with open(result_path, "w") as file:
         file.write("user_id,business_id,prediction\n")
         for (user_id, business_id), prediction in zip(val_user_business, predictions):
             file.write(f"{user_id},{business_id},{prediction}\n")
-
-# 0.9809722202734829,good
+            
+# rmse*10000	9782.70019029434
+# rmse_val*10000	9795.969060137522
